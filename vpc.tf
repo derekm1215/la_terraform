@@ -128,7 +128,7 @@ resource "aws_security_group" "Public" {
   vpc_id      = "${aws_vpc.vpc.id}"
 
 
-# SSH access from anywhere
+# SSH access from your local ip curl canhazip.com for an easy way to find it. 
 ingress {
 from_port    = 22
 to_port      = 22
@@ -217,16 +217,15 @@ resource "aws_instance" "golden" {
   key_name = "${aws_key_pair.auth.id}"
   vpc_security_group_ids = ["${aws_security_group.Public.id}"]
 
-# We're going to launch into the public subnet for this.
-# Normally, in production environments, webservers would be in
-# private subnets.
+# We're going to launch the dev server into a public subnet for setup.
+# Production servers in autoscaling group will be launched into private subnets.
   subnet_id = "${aws_subnet.public.id}"
-
 
 # Ansible Playbook
 #  provisioner "local-exec" {
-#      command = "ssh-agent bash && ssh-add ~/.ssh/dmorgantest2 && echo 'this is where we run Ansible'"
+#      command = "Ansible..."
 #    }
+
 }
 
 
