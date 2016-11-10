@@ -121,7 +121,7 @@ resource "aws_db_subnet_group" "rds_subnetgroup" {
   }
 }
 
-#Our default security group to access SSH,HTTP
+#Public security group to access SSH,HTTP
 resource "aws_security_group" "Public" {
   name= "sg_public"
   description = "Used for public instances"
@@ -154,20 +154,42 @@ cidr_blocks  = ["0.0.0.0/0"]
  }
 }
 
+#Private Security Group
+resource "aws_security_group" "private" {
+  name        = "sg_private"
+  description = "Used for private instances"
+  vpc_id      = "${aws_vpc.vpc.id}"
+  
+
+# Access from other security groups
+
+ingress {
+from_port    = 0
+to_port      = 0
+protocol     = "-1"
+cidr_blocks  = ["10.1.0.0/16"]
+}
+
+egress {
+from_port    = 0
+to_port      = 0
+protocol     = "-1"
+cidr_blocks  = ["10.1.0.0/16"]
+ }
+}
 
 #RDS Security Group
 resource "aws_security_group" "RDS" {
   name= "sg_rds"
-  description = "Used for public instances"
+  description = "Used for DB instances"
   vpc_id      = "${aws_vpc.vpc.id}"
-
 
 # SQL access from Public security group
 ingress {
 from_port    = 3306
 to_port      = 3306
 protocol     = "tcp"
-security_groups  = ["${aws_security_group.Public.id}"]
+security_groups  = ["${aws_security_group.Public.id}", "${aws_security_group.private.id}"]
  }
 }
 
@@ -207,10 +229,50 @@ resource "aws_instance" "golden" {
 #    }
 }
 
+
 resource "aws_ami_from_instance" "golden" {
     name = "golden-image"
     source_instance_id = "${aws_instance.golden.id}"
 }
+
+resource "aws_launch_configuration" "dmorgantest_lc" {
+    name   = "dmorgantest_lc"
+    image_id      = "${aws_ami_from_instance.golden.id}"
+    instance_type = "t2.micro"
+
+    lifecycle {
+      create_before_destroy = true
+    }
+}
+
+resource "aws_autoscaling_group" "dmorgantest_asg" {
+    availability_zones = ["us-east-1a", "us-east-1c"]
+    name = "dmorgantest_asg" 
+    max_size = 1
+    min_size = 1
+    health_check_grace_period = 300
+    health_check_type = "ELB"
+    desired_capacity = 1
+    force_delete = true
+#   placement_group = "${aws_placement_group.web.id}"
+    launch_configuration = "${aws_launch_configuration.dmorgantest_lc.name}"
+    
+    tag {
+      key = "Name"
+      value = "dmorgantestweb"
+      propagate_at_launch = true
+    }
+
+    lifecycle {
+      create_before_destroy = true
+    }
+}
+
+
+
+
+
+
 
 
 
