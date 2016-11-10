@@ -44,6 +44,14 @@ resource "aws_subnet" "public" {
   }
 }
 
+#Associate public subnet with public route table
+
+resource "aws_route_table_association" "a" {
+    subnet_id = "${aws_subnet.public.id}"
+    route_table_id = "${aws_route_table.public.id}"
+}
+
+
 # Create a private subnet
 resource "aws_subnet" "private1" {
   vpc_id= "${aws_vpc.vpc.id}"
@@ -174,5 +182,36 @@ resource "aws_db_instance" "dmorgantest" {
     db_subnet_group_name        = "rds_subnetgroup"
    # parameter_group_name	= "default.mysql5.6"
 }
+
+resource "aws_key_pair" "auth" {
+    key_name    = "${var.key_name}"
+    public_key  = "${file(var.public_key_path)}"
+}
+
+resource "aws_instance" "golden" {
+  instance_type = "t2.micro"
+  ami = "ami-fce3c696"
+
+  key_name = "${aws_key_pair.auth.id}"
+  vpc_security_group_ids = ["${aws_security_group.Public.id}"]
+
+# We're going to launch into the public subnet for this.
+# Normally, in production environments, webservers would be in
+# private subnets.
+  subnet_id = "${aws_subnet.public.id}"
+
+
+# Ansible Playbook
+#  provisioner "local-exec" {
+#      command = "ssh-agent bash && ssh-add ~/.ssh/dmorgantest2 && echo 'this is where we run Ansible'"
+#    }
+}
+
+resource "aws_ami_from_instance" "golden" {
+    name = "golden-image"
+    source_instance_id = "${aws_instance.golden.id}"
+}
+
+
 
 
