@@ -103,3 +103,42 @@ resource "aws_subnet" "RDS3" {
     Name = "RDS3"
   }
 }
+
+#Our default security group to access SSH,HTTP
+resource "aws_security_group" "Public" {
+  name= "sg_public"
+  description = "Used for public instances"
+  vpc_id      = "${aws_vpc.vpc.id}"
+
+
+# SSH access from anywhere
+ingress {
+from_port    = 22
+to_port      = 22
+protocol     = "tcp"
+cidr_blocks  = ["${var.localip}"]
+ }
+
+# HTTP access from the VPC
+ingress {
+from_port    = 80
+to_port      = 80
+protocol     = "tcp"
+cidr_blocks  = ["0.0.0.0/0"]
+ } 
+
+
+# Outbound internet access
+egress {
+from_port    = 0
+to_port      = 0
+protocol     = "-1" # all protocols
+cidr_blocks  = ["0.0.0.0/0"]
+ }
+}
+
+
+
+
+
+
