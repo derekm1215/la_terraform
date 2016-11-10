@@ -104,8 +104,8 @@ resource "aws_subnet" "RDS3" {
   }
 }
 
-resource "aws_db_subnet_group" "rds_sng" {
-  name = "rds_sng"
+resource "aws_db_subnet_group" "rds_subnetgroup" {
+  name = "rds_subnetgroup"
     subnet_ids = ["${aws_subnet.RDS1.id}", "${aws_subnet.RDS2.id}", "${aws_subnet.RDS3.id}"]
     
   tags {
@@ -171,7 +171,7 @@ resource "aws_db_instance" "dmorgantest" {
     name			= "dmorgandb"
     username			= "${var.dbuser}"
     password			= "${var.dbpass}"
-    db_subnet_group_name        = "rds_sng"
+    db_subnet_group_name        = "rds_subnetgroup"
    # parameter_group_name	= "default.mysql5.6"
 }
 
