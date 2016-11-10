@@ -104,6 +104,15 @@ resource "aws_subnet" "RDS3" {
   }
 }
 
+resource "aws_db_subnet_group" "rds_sng" {
+  name = "rds_sng"
+    subnet_ids = ["${aws_subnet.RDS1.id}", "${aws_subnet.RDS2.id}", "${aws_subnet.RDS3.id}"]
+    
+  tags {
+    Name = "RDS Subnet Group"
+  }
+}
+
 #Our default security group to access SSH,HTTP
 resource "aws_security_group" "Public" {
   name= "sg_public"
@@ -138,7 +147,32 @@ cidr_blocks  = ["0.0.0.0/0"]
 }
 
 
+#RDS Security Group
+resource "aws_security_group" "RDS" {
+  name= "sg_rds"
+  description = "Used for public instances"
+  vpc_id      = "${aws_vpc.vpc.id}"
 
 
+# SQL access from Public security group
+ingress {
+from_port    = 3306
+to_port      = 3306
+protocol     = "tcp"
+security_groups  = ["${aws_security_group.Public.id}"]
+ }
+}
+
+resource "aws_db_instance" "dmorgantest" {
+    allocated_storage 		= 10
+    engine			= "mysql"
+    engine_version		= "5.6.27"
+    instance_class		= "db.t1.micro"
+    name			= "dmorgandb"
+    username			= "${var.dbuser}"
+    password			= "${var.dbpass}"
+    db_subnet_group_name        = "rds_sng"
+   # parameter_group_name	= "default.mysql5.6"
+}
 
 
