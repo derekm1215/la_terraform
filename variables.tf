@@ -18,12 +18,12 @@ variable "public_key_path" {
 
 Example: ~/.ssh/dmorgantest2.pub
 DESCRIPTION
-    default = "~/.ssh/dmorgantest2.pub"
+    default = "~/.ssh/dmorgantest3.pub"
 }
 
 variable "key_name" {
   description = "Desired name of AWS key pair"
-  default = "dmorgantest2"
+  default = "dmorgantest3"
 }
 
 variable "aws_region" {

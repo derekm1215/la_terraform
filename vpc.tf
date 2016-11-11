@@ -56,7 +56,7 @@ resource "aws_route_table_association" "a" {
 resource "aws_subnet" "private1" {
   vpc_id= "${aws_vpc.vpc.id}"
   cidr_block= "10.1.2.0/24"
-  map_public_ip_on_launch = true
+  map_public_ip_on_launch = false
    availability_zone = "us-east-1a"
 
   tags {
@@ -202,20 +202,60 @@ resource "aws_db_instance" "dmorgantest" {
     username			= "${var.dbuser}"
     password			= "${var.dbpass}"
     db_subnet_group_name        = "rds_subnetgroup"
+    vpc_security_group_ids      = ["${aws_security_group.RDS.id}"]
    # parameter_group_name	= "default.mysql5.6"
 }
+
+
+# Create S3 buckets code and media
 
 resource "aws_key_pair" "auth" {
     key_name    = "${var.key_name}"
     public_key  = "${file(var.public_key_path)}"
 }
 
+resource "aws_s3_bucket" "la_code" {  
+    bucket = "la_code1110"  
+    acl = "private"  
+  
+tags {  
+Name = "code bucket"  
+  
+}  
+}  
+  
+resource "aws_s3_bucket" "la_media" {  
+    bucket = "la_media1110"  
+    acl = "private"  
+  
+tags {  
+Name = "media bucket"  
+    }  
+}
+
+
+# Create the master dev server
+
 resource "aws_instance" "golden" {
   instance_type = "t2.micro"
-  ami = "ami-fce3c696"
+  ami = "ami-b73b63a0"
 
   key_name = "${aws_key_pair.auth.id}"
   vpc_security_group_ids = ["${aws_security_group.Public.id}"]
+  provisioner "local-exec" {
+    command = "echo ${aws_instance.golden.public_ip} >> /etc/ansible/hosts"
+  }
+ # provisioner "remote-exec" {
+ #   inline = [
+ #   "yum -y install httpd",
+ #   "service httpd start"
+ #   ]
+ # }
+ 
+
+#output "ip" {
+#    value = "${aws_instance.golden.public_ip}"
+#}
 
 # We're going to launch the dev server into a public subnet for setup.
 # Production servers in autoscaling group will be launched into private subnets.
@@ -225,9 +265,39 @@ resource "aws_instance" "golden" {
 #  provisioner "local-exec" {
 #      command = "Ansible..."
 #    }
-
 }
 
+
+# Create the load balancer
+
+resource "aws_elb" "prod" {
+  name = "dmorgansite-prod-elb"    
+  subnets = ["${aws_subnet.private1.id}","${aws_subnet.private2.id}"]
+
+  listener { 
+    instance_port = 80
+    instance_protocol = "http"
+    lb_port = 80
+    lb_protocol = "http"
+  }
+
+  health_check {
+    healthy_threshold = 2
+    unhealthy_threshold = 2
+    timeout = 3
+    target = "HTTP:80/"
+    interval = 30
+  }
+
+  cross_zone_load_balancing = true
+  idle_timeout = 400
+  connection_draining = true
+  connection_draining_timeout = 400
+  
+  tags {
+    Name = "dmorgansite-prod-elb"
+  }
+}
 
 resource "aws_ami_from_instance" "golden" {
     name = "golden-image"
@@ -235,10 +305,11 @@ resource "aws_ami_from_instance" "golden" {
 }
 
 resource "aws_launch_configuration" "dmorgantest_lc" {
-    name   = "dmorgantest_lc"
+    name_prefix   = "dmorgantest_lc-"
     image_id      = "${aws_ami_from_instance.golden.id}"
     instance_type = "t2.micro"
-
+    security_groups = ["${aws_security_group.private.id}"]
+    key_name = "${aws_key_pair.auth.id}"
     lifecycle {
       create_before_destroy = true
     }
@@ -254,6 +325,7 @@ resource "aws_autoscaling_group" "dmorgantest_asg" {
     desired_capacity = 1
     force_delete = true
 #   placement_group = "${aws_placement_group.web.id}"
+    vpc_zone_identifier = ["${aws_subnet.private1.id}", "${aws_subnet.private2.id}"]
     launch_configuration = "${aws_launch_configuration.dmorgantest_lc.name}"
     
     tag {
