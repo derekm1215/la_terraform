@@ -324,7 +324,7 @@ resource "aws_autoscaling_group" "dmorgantest_asg" {
     health_check_type = "ELB"
     desired_capacity = 1
     force_delete = true
-#   placement_group = "${aws_placement_group.web.id}"
+    load_balancers = ["${aws_elb.prod.id}"]
     vpc_zone_identifier = ["${aws_subnet.private1.id}", "${aws_subnet.private2.id}"]
     launch_configuration = "${aws_launch_configuration.dmorgantest_lc.name}"
     
