@@ -243,28 +243,17 @@ resource "aws_instance" "golden" {
   key_name = "${aws_key_pair.auth.id}"
   vpc_security_group_ids = ["${aws_security_group.Public.id}"]
   provisioner "local-exec" {
-    command = "echo ${aws_instance.golden.public_ip} >> /etc/ansible/hosts"
+    command = "echo ${aws_instance.golden.public_ip} >> ~/la_terraform/aws_hosts"
   }
- # provisioner "remote-exec" {
- #   inline = [
- #   "yum -y install httpd",
- #   "service httpd start"
- #   ]
- # }
- 
-
-#output "ip" {
-#    value = "${aws_instance.golden.public_ip}"
-#}
 
 # We're going to launch the dev server into a public subnet for setup.
 # Production servers in autoscaling group will be launched into private subnets.
   subnet_id = "${aws_subnet.public.id}"
 
-# Ansible Playbook
-#  provisioner "local-exec" {
-#      command = "Ansible..."
-#    }
+# Ansible Playbook for software install
+  provisioner "local-exec" {
+      command = "sleep 6m && ansible-playbook -i ~/la_terraform/aws_hosts wordpress.yml"
+  }
 }
 
 
@@ -272,8 +261,8 @@ resource "aws_instance" "golden" {
 
 resource "aws_elb" "prod" {
   name = "dmorgansite-prod-elb"    
-  subnets = ["${aws_subnet.private1.id}","${aws_subnet.private2.id}"]
-
+  subnets = ["${aws_subnet.public.id}"]
+  security_groups = ["${aws_security_group.Public.id}"]
   listener { 
     instance_port = 80
     instance_protocol = "http"
