@@ -2,6 +2,47 @@ provider "aws" {
 region = "us-east-1"
 profile = "linuxacademy"
 }
+resource "aws_iam_instance_profile" "s3_access" {
+    name = "s3_access"
+    roles = ["${aws_iam_role.s3_access.name}"]
+}
+
+resource "aws_iam_role_policy" "s3_access_policy" {
+    name = "s3_access_policy"
+    role = "${aws_iam_role.s3_access.id}"
+    policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "s3:*",
+      "Resource": "*"
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_role" "s3_access" {
+    name = "s3_access"
+    assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+  {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "ec2.amazonaws.com"
+  },
+      "Effect": "Allow",
+      "Sid": ""
+      }
+    ]
+}
+EOF
+}
+
 
 resource "aws_vpc" "vpc" {
   cidr_block = "10.1.0.0/16"
@@ -242,8 +283,9 @@ resource "aws_instance" "golden" {
 
   key_name = "${aws_key_pair.auth.id}"
   vpc_security_group_ids = ["${aws_security_group.Public.id}"]
+  iam_instance_profile = "${aws_iam_instance_profile.s3_access.id}"
   provisioner "local-exec" {
-    command = "echo ${aws_instance.golden.public_ip} >> ~/la_terraform/aws_hosts"
+      command = "echo [dev] > ~/la_terraform/aws_hosts && echo ${aws_instance.golden.public_ip} >> ~/la_terraform/aws_hosts"
   }
 
 # We're going to launch the dev server into a public subnet for setup.
@@ -298,7 +340,9 @@ resource "aws_launch_configuration" "dmorgantest_lc" {
     image_id      = "${aws_ami_from_instance.golden.id}"
     instance_type = "t2.micro"
     security_groups = ["${aws_security_group.private.id}"]
+    iam_instance_profile = "${aws_iam_instance_profile.s3_access.id}"
     key_name = "${aws_key_pair.auth.id}"
+    user_data = "${file("userdata")}"
     lifecycle {
       create_before_destroy = true
     }
