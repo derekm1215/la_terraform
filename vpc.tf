@@ -117,6 +117,26 @@ resource "aws_subnet" "private2" {
   }
 }
 
+#create S3 VPC endpoint
+resource "aws_vpc_endpoint" "private-s3" {
+    vpc_id = "${aws_vpc.vpc.id}"
+    service_name = "com.amazonaws.us-east-1.s3"
+    route_table_ids = ["rtb-a6eebcc0"]
+    policy = <<POLICY
+{
+    "Statement": [
+        {
+            "Action": "*",
+            "Effect": "Allow",
+            "Resource": "*",
+            "Principal": "*"
+        }
+    ]
+}
+POLICY
+}
+
+
 # Create RDS Subnet 1
 resource "aws_subnet" "RDS1" {
   vpc_id= "${aws_vpc.vpc.id}"
@@ -215,7 +235,7 @@ egress {
 from_port    = 0
 to_port      = 0
 protocol     = "-1"
-cidr_blocks  = ["10.1.0.0/16"]
+cidr_blocks  = ["0.0.0.0/0"]
  }
 }
 
@@ -242,8 +262,7 @@ resource "aws_db_instance" "dmorgantest" {
     name			= "dmorgandb"
     username			= "${var.dbuser}"
     password			= "${var.dbpass}"
-    db_subnet_group_name        = "rds_subnetgroup"
-    vpc_security_group_ids      = ["${aws_security_group.RDS.id}"]
+    db_subnet_group_name        = "rds_subnetgroup"                                                                                         vpc_security_group_ids      = ["${aws_security_group.RDS.id}"]
    # parameter_group_name	= "default.mysql5.6"
 }
 
