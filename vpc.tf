@@ -72,13 +72,19 @@ resource "aws_route_table" "public" {
     }
 }
 
+resource "aws_default_route_table" "private" {
+    default_route_table_id = "${aws_vpc.vpc.default_route_table_id}"
+    tags {
+        Name = "private"
+    }
+}
 
 # Create a public subnet
 resource "aws_subnet" "public" {
   vpc_id= "${aws_vpc.vpc.id}"
   cidr_block= "10.1.1.0/24"
   map_public_ip_on_launch = true
-  availability_zone = "us-east-1a"
+  availability_zone = "us-east-1d"
 
   tags {
     Name = "Public"
@@ -120,8 +126,8 @@ resource "aws_subnet" "private2" {
 #create S3 VPC endpoint
 resource "aws_vpc_endpoint" "private-s3" {
     vpc_id = "${aws_vpc.vpc.id}"
-    service_name = "com.amazonaws.us-east-1.s3"
-    route_table_ids = ["rtb-a6eebcc0"]
+    service_name = "com.amazonaws.${var.aws_region}.s3"
+    route_table_ids = ["${aws_vpc.vpc.main_route_table_id}"]
     policy = <<POLICY
 {
     "Statement": [
@@ -322,7 +328,7 @@ resource "aws_instance" "golden" {
 
 resource "aws_elb" "prod" {
   name = "dmorgansite-prod-elb"    
-  subnets = ["${aws_subnet.public.id}"]
+  subnets = ["${aws_subnet.public.id}", "${aws_subnet.private1.id}", "${aws_subnet.private2.id}"]
   security_groups = ["${aws_security_group.Public.id}"]
   listener { 
     instance_port = 80
