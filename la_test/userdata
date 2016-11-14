@@ -1,5 +1,0 @@
-#!/bin/bash
-sudo /usr/bin/aws s3 sync s3://code /var/www/html >> /var/www/html/
-/bin/touch /var/spool/cron/ec2-user
-sudo /bin/echo "*/5 * * * * aws s3 sync s3://code /var/www/html/" >> /var/spool/cron/ec2-user
- 
