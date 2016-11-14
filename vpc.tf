@@ -93,11 +93,25 @@ resource "aws_subnet" "public" {
 
 #Associate public subnet with public route table
 
-resource "aws_route_table_association" "a" {
+resource "aws_route_table_association" "public_assoc" {
     subnet_id = "${aws_subnet.public.id}"
     route_table_id = "${aws_route_table.public.id}"
 }
 
+#Associate private1 subnet with public route table
+
+resource "aws_route_table_association" "private1_assoc" {
+    subnet_id = "${aws_subnet.private1.id}"
+    route_table_id = "${aws_route_table.public.id}"
+}
+
+
+#Associate private2 subnet with public route table
+
+resource "aws_route_table_association" "private2_assoc" {
+    subnet_id = "${aws_subnet.private2.id}"
+    route_table_id = "${aws_route_table.public.id}"
+}
 
 # Create a private subnet
 resource "aws_subnet" "private1" {
@@ -127,7 +141,7 @@ resource "aws_subnet" "private2" {
 resource "aws_vpc_endpoint" "private-s3" {
     vpc_id = "${aws_vpc.vpc.id}"
     service_name = "com.amazonaws.${var.aws_region}.s3"
-    route_table_ids = ["${aws_vpc.vpc.main_route_table_id}"]
+    route_table_ids = ["${aws_vpc.vpc.main_route_table_id}", "${aws_route_table.public.id}"]
     policy = <<POLICY
 {
     "Statement": [
@@ -328,7 +342,7 @@ resource "aws_instance" "golden" {
 
 resource "aws_elb" "prod" {
   name = "dmorgansite-prod-elb"    
-  subnets = ["${aws_subnet.public.id}", "${aws_subnet.private1.id}", "${aws_subnet.private2.id}"]
+  subnets = ["${aws_subnet.private1.id}", "${aws_subnet.private2.id}"]
   security_groups = ["${aws_security_group.Public.id}"]
   listener { 
     instance_port = 80
@@ -376,11 +390,11 @@ resource "aws_launch_configuration" "dmorgantest_lc" {
 resource "aws_autoscaling_group" "dmorgantest_asg" {
     availability_zones = ["us-east-1a", "us-east-1c"]
     name = "dmorgantest_asg" 
-    max_size = 1
+    max_size = 2
     min_size = 1
     health_check_grace_period = 300
     health_check_type = "ELB"
-    desired_capacity = 1
+    desired_capacity = 2
     force_delete = true
     load_balancers = ["${aws_elb.prod.id}"]
     vpc_zone_identifier = ["${aws_subnet.private1.id}", "${aws_subnet.private2.id}"]
