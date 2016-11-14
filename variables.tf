@@ -1,5 +1,5 @@
 variable "localip" {
-    default = "76.24.28.162/32"
+#    default = "76.24.28.162/32"
 }
 variable "dbuser" {
     default = "dmorgan"

@@ -284,6 +284,8 @@ resource "aws_db_instance" "dmorgantest" {
     password			= "${var.dbpass}"
     db_subnet_group_name        = "rds_subnetgroup"                                                                                         vpc_security_group_ids      = ["${aws_security_group.RDS.id}"]
    # parameter_group_name	= "default.mysql5.6"
+
+##Add local-exec to run ansible wordpress_database setup here
 }
 
 
@@ -297,7 +299,7 @@ resource "aws_key_pair" "auth" {
 resource "aws_s3_bucket" "la_code" {  
     bucket = "la_code1110"  
     acl = "private"  
-  
+    force_destroy = true
 tags {  
 Name = "code bucket"  
   
@@ -306,7 +308,8 @@ Name = "code bucket"
   
 resource "aws_s3_bucket" "la_media" {  
     bucket = "la_media1110"  
-    acl = "private"  
+    acl = "private"
+    force_destroy = true  
   
 tags {  
 Name = "media bucket"  
@@ -393,7 +396,7 @@ resource "aws_autoscaling_group" "dmorgantest_asg" {
     max_size = 2
     min_size = 1
     health_check_grace_period = 300
-    health_check_type = "ELB"
+    health_check_type = "EC2"
     desired_capacity = 2
     force_delete = true
     load_balancers = ["${aws_elb.prod.id}"]

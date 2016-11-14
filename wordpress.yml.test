@@ -20,13 +20,9 @@
       service: name=httpd state=started enabled=yes
     - name: Download WordPress
       get_url: url=http://wordpress.org/wordpress-latest.tar.gz dest=/var/www/html/wordpress.tar.gz force=yes
-    - name: Extract WordPress
-      command: "tar xzf /var/www/html/wordpress.tar.gz -C /var/www/html --strip-components 1"
-    - name: Make my directory tree readable
-      file:
-        path: /var/www/html/
-        mode: u=rwX,g=rX,o=rX
-        recurse: yes
+    - name: Extract archive
+      unarchive: src=/var/www/html/wordpress.tar.gz dest=/var/www/html copy=no
+    - command: mkdir -p /var/www/html && cd /var/www/html/ && cp /var/www/wordpress/* /var/www/html/. 
     - name: Make sure Apache is started now and at boot.
       service: name=httpd state=started enabled=yes
    
