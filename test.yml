@@ -1,0 +1,10 @@
+---
+- hosts: dev
+  become: yes
+  remote_user: ec2-user
+  tasks:
+  - shell: echo "define('WP_SITEURL','http://dev.linuxsuperhero.com');" >> wp-config.php
+    args:
+      chdir: /var/www/html/
+
+  

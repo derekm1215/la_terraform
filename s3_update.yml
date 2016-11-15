@@ -5,3 +5,9 @@
   tasks:
   - name: Update S3 code bucket
     command: aws s3 sync /var/www/html/ s3://la_code1110/ --delete
+  - shell: echo "define('WP_SITEURL','http://dev.linuxsuperhero.com');"  >> wp-config.php
+    args:
+      chdir: /var/www/html/
+  - shell: echo "define('WP_HOME','http://dev.linuxsuperhero.com');"  >> wp-config.php
+    args:
+      chdir: /var/www/html/
