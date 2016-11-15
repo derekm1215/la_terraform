@@ -1,18 +1,38 @@
-variable "localip" {
-    default = "76.24.28.162/32"
-}
+variable "localip" {}
 
-variable "aws_profile" {
-    default = "linuxacademy"
-}
+variable "aws_profile" {}
 
-variable "dbuser" {
-    default = "dmorgan"
-}
+variable "dbname" {}
 
-variable "dbpass" {
-    default = "dmorgantest"
-}
+variable "dbuser" {}
+
+variable "dbpass" {}
+
+variable "db_instance_class" {}
+
+variable "dev_instance_type" {}
+
+variable "lc_instance_type" {}
+
+variable "dev_ami" {}
+
+variable "elb_healthy_threshold" {}
+
+variable "elb_unhealthy_threshold" {}
+
+variable "elb_timeout" {}
+
+variable "elb_interval" {}
+
+variable "asg_max" {}
+
+variable "asg_min" {}
+
+variable "asg_grace" {}
+
+variable "asg_hct" {}
+
+variable "asg_cap" {}
 
 variable "public_key_path" {
     description = <<DESCRIPTION
@@ -23,27 +43,26 @@ variable "public_key_path" {
 
 Example: ~/.ssh/my_key.pub
 DESCRIPTION
-    default = "~/.ssh/my_key.pub"
 }
 
 variable "key_name" {
   description = "Desired name of AWS key pair"
-  default = "my_key"
 }
 
 variable "aws_region" {
-  default = "us-east-1"
+  description = "example: us-east-1"
 }
 
-variable "s3_endpoint" {
-  default = "com.amazonaws.us-east-1.s3"
-}
 
 variable "domain_name" {
-  default = "linuxsuperhero"
+  description = "Only enter the domain portion. Do not enter the TLD. example: linuxsuperhero"
 }
 
 variable "delegation_set" {
-  default = "N3GTFFZI1MK1ON"
+    description = <<DESCRIPTION
+ This is obtained from
+ aws route53 create-reusable-delegation-set --caller-reference 1234
+ It will be a 14 digit alphanumeric string.
+DESCRIPTION
 }
 
