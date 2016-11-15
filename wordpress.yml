@@ -27,6 +27,8 @@
         path: /var/www/html/
         mode: u=rwX,g=rX,o=rX
         recurse: yes
+        owner: apache
+        group: apache
     - name: Make sure Apache is started now and at boot.
       service: name=httpd state=started enabled=yes
    

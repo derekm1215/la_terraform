@@ -33,3 +33,16 @@ variable "aws_region" {
 variable "s3_endpoint" {
   default = "com.amazonaws.us-east-1.s3"
 }
+
+variable "domain_name" {
+  default = "linuxsuperhero"
+}
+
+#variable "zone_id" {
+# default = "${aws_route53_zone.primary.zone_id}"
+#}
+
+variable "delegation_set" {
+  default = "N3GTFFZI1MK1ON"
+}
+
