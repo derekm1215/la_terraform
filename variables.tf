@@ -1,6 +1,11 @@
 variable "localip" {
-#    default = "76.24.28.162/32"
+    default = "76.24.28.162/32"
 }
+
+variable "aws_profile" {
+    default = "linuxacademy"
+}
+
 variable "dbuser" {
     default = "dmorgan"
 }
@@ -16,14 +21,14 @@ variable "public_key_path" {
  to your local SSH agent so provisioners
  can connect.
 
-Example: ~/.ssh/dmorgantest2.pub
+Example: ~/.ssh/my_key.pub
 DESCRIPTION
-    default = "~/.ssh/dmorgantest3.pub"
+    default = "~/.ssh/my_key.pub"
 }
 
 variable "key_name" {
   description = "Desired name of AWS key pair"
-  default = "dmorgantest3"
+  default = "my_key"
 }
 
 variable "aws_region" {
@@ -37,10 +42,6 @@ variable "s3_endpoint" {
 variable "domain_name" {
   default = "linuxsuperhero"
 }
-
-#variable "zone_id" {
-# default = "${aws_route53_zone.primary.zone_id}"
-#}
 
 variable "delegation_set" {
   default = "N3GTFFZI1MK1ON"
