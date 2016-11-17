@@ -4,7 +4,7 @@
   remote_user: ec2-user
   tasks:
   - name: Update S3 code bucket
-    command: aws s3 sync /var/www/html/ s3://linuxsuperhero_code1115/ --delete
+    command: aws s3 sync /var/www/html/ s3://{{ s3code }}/ --delete
   - shell: echo "define('WP_SITEURL','http://dev.linuxsuperhero.com');"  >> wp-config.php
     args:
       chdir: /var/www/html/

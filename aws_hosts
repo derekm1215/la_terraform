@@ -1,2 +1,4 @@
-[dev]
-52.90.98.7
+[dev] 
+54.174.31.156
+[dev:vars]
+s3code=linuxsuperhero_code1115

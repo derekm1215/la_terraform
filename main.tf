@@ -297,17 +297,17 @@ resource "aws_s3_bucket" "code" {
 tags {  
 Name = "code bucket"  
   
-}  
+  }  
 }  
   
-resource "aws_s3_bucket" "media" {  
-    bucket = "${var.domain_name}_media1115"  
-    acl = "private"
-    force_destroy = true  
-  
-tags {  
-Name = "media bucket"  
-    }  
+resource "aws_s3_bucket" "media" {
+bucket = "${var.domain_name}_media1115"
+acl = "private"
+force_destroy = true
+
+tags {
+Name = "media bucket"
+  }
 }
 
 
@@ -316,24 +316,33 @@ Name = "media bucket"
 resource "aws_instance" "dev" {
   instance_type = "${var.dev_instance_type}"
   ami = "${var.dev_ami}"
+  tags {
+      Name = "dev"
+  }
 
   key_name = "${aws_key_pair.auth.id}"
   vpc_security_group_ids = ["${aws_security_group.public.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.s3_access.id}"
+
+# We send the pubIP and code bucket info of the instance to the aws_hosts file for use with Ansible
+
   provisioner "local-exec" {
-      command = "echo [dev] > ~/la_terraform/aws_hosts && echo ${aws_instance.dev.public_ip} >> ~/la_terraform/aws_hosts"
+      command = "cat <<EOF > aws_hosts 
+[dev] 
+${aws_instance.dev.public_ip}
+[dev:vars]
+s3code=${aws_s3_bucket.code.bucket}
+EOF"
   }
 
-# We're going to launch the dev server into a public subnet for setup.
-# Production servers in autoscaling group will be launched into private subnets.
+
   subnet_id = "${aws_subnet.public.id}"
 
 # Ansible Playbook for software install
   provisioner "local-exec" {
-      command = "sleep 6m && ansible-playbook -i ~/la_terraform/aws_hosts wordpress.yml"
+      command = "sleep 6m && ansible-playbook -i aws_hosts wordpress.yml"
   }
 }
-
 
 # Create the load balancer
 
@@ -366,9 +375,22 @@ resource "aws_elb" "prod" {
   }
 }
 
+
+resource "random_id" "ami" {
+ byte_length = 8
+}
+
 resource "aws_ami_from_instance" "golden" {
-    name = "golden-image"
+    name = "ami-${random_id.ami.b64}"
     source_instance_id = "${aws_instance.dev.id}"
+    provisioner "local-exec" {
+      command = "cat <<EOF > userdata
+#!/bin/bash
+/usr/bin/aws s3 sync s3://${aws_s3_bucket.code.bucket} /var/www/html/
+/bin/touch /var/spool/cron/root
+sudo /bin/echo '*/5 * * * * aws s3 sync s3://${aws_s3_bucket.code.bucket} /var/www/html/' >> /var/spool/cron/root
+EOF"
+ }
 }
 
 # Create Launch configuration from dev ami
@@ -386,7 +408,6 @@ resource "aws_launch_configuration" "lc" {
     }
 }
 
-
 resource "random_id" "asg" {
  byte_length = 8
 }
@@ -394,7 +415,7 @@ resource "random_id" "asg" {
 
 resource "aws_autoscaling_group" "asg" {
     availability_zones = ["${var.aws_region}a", "${var.aws_region}c"]
-    name = "asg-{random_id.asg.decimal}" 
+    name = "asg-${aws_launch_configuration.lc.id}" 
     max_size = "${var.asg_max}"
     min_size = "${var.asg_min}"
     health_check_grace_period = "${var.asg_grace}"
@@ -407,7 +428,7 @@ resource "aws_autoscaling_group" "asg" {
     
     tag {
       key = "Name"
-      value = "asg"
+      value = "asg-instance"
       propagate_at_launch = true
     }
 
