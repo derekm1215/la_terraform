@@ -3,13 +3,6 @@
   become: yes
   remote_user: ec2-user
   tasks:
-    - name: wait for server to start
-      local_action:
-        module: wait_for
-          host=dev
-          port=22
-          delay=1
-          timeout=300
     - name: Install Apache.
       yum: name={{ item }} state=present
       with_items:
