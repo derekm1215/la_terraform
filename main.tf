@@ -276,7 +276,7 @@ resource "aws_db_instance" "db" {
     name			= "${var.dbname}"
     username			= "${var.dbuser}"
     password			= "${var.dbpass}"
-    db_subnet_group_name        = "rds_subnetgroup"                                                                                         vpc_security_group_ids      = ["${aws_security_group.RDS.id}"]
+    db_subnet_group_name        = "${aws_db_subnet_group.rds_subnetgroup.name}"                                                             vpc_security_group_ids      = ["${aws_security_group.RDS.id}"]
 
 }
 
